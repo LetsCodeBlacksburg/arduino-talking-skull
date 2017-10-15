@@ -38,7 +38,7 @@ void setup() {
 
 // *************** MAIN LOOP *******************
 void loop() {
-  myServo.write(mouthOpen);
+  myServo.write(mouthOpened);
   delay(1000);
 
   myServo.write(mouthClosed);
