@@ -2,6 +2,7 @@
 This project is designed as a make-and-take Halloween workshop that requires:
 * 6 inch plastic Halloween skull with freely articulated jaw (Walmart or Target for under $5)
 * Arduino UNO (recommend the red "Funduino" board with built in servo/I/O 3pin headers)
+* RC 9g SG90 micro servo
 * Ultrasonic ping range finder (either US-100 or HC-SR04 sensors)
 * DFPlayer mini MP3 player (my DFRobot.com)
 * Small 3watt 8ohm speaker
