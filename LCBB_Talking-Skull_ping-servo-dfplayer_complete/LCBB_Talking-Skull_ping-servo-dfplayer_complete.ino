@@ -22,11 +22,19 @@ motion activated mp3 player of all available sound files.
   
   // Hardware wiring and Theory of DFPlay + Ping Sensor (US-100) and Servo
   //
+  // LED Eyes   eyePinL=2   eyePinR=3
+  //
   // PING                  
-  // US-100  \--5v-trg-echo-GND-GND--/     DFPlay mini  --Vcc--RX--TX--DACR--GND  ...  _BUSY
-  //             |   |   |   |   |                         |    |   |    |    |         |
-  // Arduino    Vcc  4   5  GND                Arduino    5v   11* 10*   A0  GND        12* 
-  //                                                                              * requires 1k resisitor    
+  // US-100  \--5v-trg-echo-GND-GND--/    
+  //             |   |   |   |   |        
+  // Arduino    Vcc  4   5  GND           
+  //                                     
+  // DFPlay mini  --Vcc(1)--RX(2)--TX(3)--DACR(4)--GND(7)  +(6) -(8)  ...  _BUSY
+  //                 |       |      |       |       |      |    |           |
+  //     Arduino    5v      11*    10*     A0      GND     |    |          12*     
+  //                                                       \Spkr/
+  //                              * requires 1k resisitor
+  //     
   //  Servo is on digital I/O pin 6 
   //
   // The Ultrasonic distance sensor is triggered, sends the myDFPlayer.play(sndFile) command and then
@@ -59,7 +67,9 @@ motion activated mp3 player of all available sound files.
 Servo myServo;  // create a servo object
 
 
-////////// VARIABLES /////////////
+/////////////////////////////////////////////////////////////////////
+///////////////////////// VARIABLES /////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 
 /////////// HARDWARE SETTINGS/HOOKUPS ////////
 
@@ -72,11 +82,16 @@ int fileCount=9;          // Either set the max # of files here, or load it from
                           // NOTE: readFileCounts() also sees deleted files. May need to reformat to load new sounds.
 int setVol=25;            //Set volume value (0~30)
 
+//Eyes
+const int eyePinL=2;
+const int eyePinR=3;
+
 
 //Ping sensor
 const   int trgPin = 4;     // pin we're sending the trigger/ping signal on
 const   int echoPin = 5;    // pin we're reading back the echo on
-const   long motionDist=29; // distance that triggers a sound
+const   long motionDist=5; // distance that triggers a sound (5 for testing)
+//const   long motionDist=35; // distance that triggers a sound (29-40 for real life)
 long    distance=0;         // distance to be measured/recorded by ping sensor
 
 //Sound Vars
@@ -90,9 +105,11 @@ int       soundAmplitude=150; // Avg max deltas for my sound files (e.g. map ser
 
 //Mouth Settings
 const int servoPin=6;
-int       mouthOpened=0 ;    // These values will have to be discovered for your servo configuration.
-int       mouthClosed=80 ;   // These values will have to be discovered for your servo configuration.
-int       moveDelay=200;     // Amount of time to allow one open or closed move (1/2 cycle) 
+//**** Settings for 6" Skull, Right jaw-joint servo-axis pivot mount
+//****    -around 60 degrees of travel 
+int mouthClosed=125 ;   // These values will have to be discovered for your servo configuration.
+int mouthOpened=90 ;    // These values will have to be discovered for your servo configuration.
+int mouthDelay=200;      // Amount of time to allow one open or closed move (1/2 cycle)
 
 
 // Software Serial Pins To DFPlayer
@@ -102,7 +119,7 @@ DFRobotDFPlayerMini myDFPlayer;
 void printDetail(uint8_t type, int value);
 
 
-
+/////////////////////////////////////////////////////////////////////
 /////////////////////// LARGE SETUP BLOLCK //////////////////////////
 /////////////////////////////////////////////////////////////////////
 void setup()
@@ -122,6 +139,10 @@ void setup()
   myServo.write(mouthOpened);
   delay(500);
   myServo.write(mouthClosed);
+
+  // Set up eyes
+  pinMode(eyePinL, OUTPUT);
+  pinMode(eyePinR, OUTPUT);
   
   //  Set up DFPlay mini
   delay(250);
@@ -147,7 +168,7 @@ void setup()
     Serial.print(myDFPlayer.readState()); //read mp3 state
     Serial.print(" / ");
     Serial.println(myDFPlayer.readFileCounts()); //read all file counts in SD card
-  while(true);      // Hang forever
+    while(true);      // Hang forever
   }
 
   // if serial setup worked
@@ -171,22 +192,37 @@ void setup()
 }
 
 
-//******************* MAIN LOOP ********************
+// ***********************************************************
+// *********************** MAIN LOOP *************************
+// ***********************************************************
 void loop()
 {
-  delay(100);
+  delay(200);
   distance=getDist();
-  delay(100);
+  delay(60);
 
-  ////// Loop here until someone comes closer than motionDist
-  while(distance > motionDist ){
-    soundVal=analogRead(soundPin);
-    Serial.print(" soundVal= ");
-    Serial.println(soundVal);    
+  ////// Wait Here For Someone Coming Near (distance <= motionDist)
+  ////// Also grabs the sound output "silenceVal" (DC offset)
+  while(distance > motionDist){
+    //soundVal=analogRead(soundPin);
     silenceVal=analogRead(soundPin);
-    delay(50);
+    Serial.print(" silenceVal= ");
+    Serial.print(silenceVal);    
+    Serial.print("    distance= ");
+    Serial.println(distance);    
     distance=getDist();
+    delay(120);
   }
+
+  // PING > 1000 Bug Fix:
+  // Use this if you see buggy distance >1000 then =1 issues
+  //if (distance > 1000 ){
+  //  while (distance > 1000 || distance==1 ){
+  //    delay(150);
+  //    distance=getDist();
+  //  }
+  //}
+
 
   ////// If at the last sound file, then loop back to the top (1)
   if (sndFile == (fileCount+1) ) {
@@ -194,43 +230,37 @@ void loop()
   }
 
   ////// Begin playing the next sound file...
-  Serial.println("************** PLAYING ***************");
+  Serial.println("************** PLAYING ****************");
   myDFPlayer.play(sndFile);   //Play the next mp3
+  Serial.print(" silenceVal= ");
+  Serial.print(silenceVal);    
+  Serial.print("    distance= ");
+  Serial.println(distance);    
   delay(100);                 // wait to start
 
 
-  ////// While DFPlayer _BUSY line is active(low), sample audio & move servo ujntil not busy.
+  ////// While DFPlayer _BUSY line is active(low), use preferred laugh function.
   while(!digitalRead(dfBusy) == true ){
-    soundVal=analogRead(soundPin);
-    delay(10);
-    //soundVal=((soundVal + analogRead(soundPin)) /2);
-    // This fairly quickly self-sets the soundMax and soundMin values (in case I need them)
-    if (soundVal > soundMax) {
-      soundMax=soundVal;
-    }
-    if (soundVal < soundMin) {
-      soundMin=soundVal;  
-    }
-    
-    ////// Map Audio Level and move the mouth
-    //soundVal = map(soundVal, soundMin, soundMax, mouthClosed, soundAmplitude);
-    //soundVal = map(soundVal, (soundMax-soundAmplitude), soundMax, mouthClosed, mouthOpened);
-    soundVal = map(soundVal, silenceVal, soundMax, mouthClosed, mouthOpened);
-    myServo.write(soundVal);
-    delay(200);
+    digitalWrite(eyePinL, HIGH);
+    digitalWrite(eyePinR, HIGH);
+    laughCount(1);            // does 1 open/close cycle. Comment out if using laughWsound()
+    //laughWsound();          // use this if you get the sound/mouth tracking working
+    delay(20);
   }
 
- ////// Reset sound Max/Min values... and incriment to the next sound file
+ ////// Shut off eyes, close mouth, any relivant audio settings
+  digitalWrite(eyePinL, LOW);
+  digitalWrite(eyePinR, LOW);
   myServo.write(mouthClosed);
   delay(200);
-  soundMax=100;
-  soundMin=500;
   sndFile++;     // Incriment to the next sound file
   
 }
 
+// *****************************************************************
+// ******************* Useful T-shooting Output ********************
+// **** just copy into play and uncomment **************************
 
-//******************* Useful T-shooting Output ********************
     //Serial.print("NEAR-INFO: getDist()= ");
     //Serial.print(distance);  
     //Serial.print(" / _BUSY= ");
@@ -302,7 +332,7 @@ void loop()
 //  myDFPlayer.enableLoop(); //enable loop.
 //  myDFPlayer.disableLoop(); //disable loop.
 
-//////----Read imformation----
+//////----Read information----
 //  Serial.println(myDFPlayer.readState()); //read mp3 state
 //  Serial.println(myDFPlayer.readVolume()); //read current volume
 //  Serial.println(myDFPlayer.readEQ()); //read EQ setting
@@ -315,8 +345,9 @@ void loop()
 
 
 
-////////////////////////// printDetail //////////////////////
-/////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+///////////////////// printDetail() ///////////////////////
+///////////////////////////////////////////////////////////
 void printDetail(uint8_t type, int value){
 
   switch (type) {
@@ -373,10 +404,55 @@ void printDetail(uint8_t type, int value){
   }
 }
 
-// Code from Arduino ping
+
+
 // ***********************************************************
-// ***** getDist() *******************************************
+// ********************* laughCount() ************************
 // ***********************************************************
+// Opens & closes n times in a laughing motion. (Uses your custom moutOpened/mouthClosed/mouthDelay values)
+void laughCount(int n){
+  for ( int x=1 ; x < (n+1) ; x++){
+  myServo.write(mouthOpened);
+  delay(mouthDelay);
+  myServo.write(mouthClosed);
+  delay(mouthDelay);
+  }
+}
+
+
+// ************************************************************
+// ********************* laughWsound() ************************
+// ************************************************************
+// Opens & closes mouth by tracking the auto-envelope (samples) of the audio output.
+void laughWsound(){
+   while(!digitalRead(dfBusy) == true ){
+    soundVal=analogRead(soundPin);
+    delay(10);
+    //soundVal=((soundVal + analogRead(soundPin)) /2);
+    // This fairly quickly self-sets the soundMax and soundMin values (in case I need them)
+
+    if (soundVal > soundMax) {
+      soundMax=soundVal;
+    }
+    if (soundVal < soundMin) {
+      soundMin=soundVal;  
+    }
+    
+    ////// Map Audio Level and move the mouth
+    //soundVal = map(soundVal, soundMin, soundMax, mouthClosed, soundAmplitude);
+    //soundVal = map(soundVal, (soundMax-soundAmplitude), soundMax, mouthClosed, mouthOpened);
+    soundVal = map(soundVal, silenceVal, soundMax, mouthClosed, mouthOpened);
+    myServo.write(soundVal);
+    soundMax=100;
+    soundMin=500;
+   }
+}
+
+
+
+// ***********************************************************
+// ********************** getDist() **************************
+// ***Code from Arduino ping *********************************
 long getDist()
 {
   // establish variables for duration of the ping,
@@ -413,6 +489,7 @@ long microsecondsToInches(long microseconds)
   return microseconds / 74 / 2;
 }
 
+// Original code from the ping sensor library
 long microsecondsToCentimeters(long microseconds)
 {
   // The speed of sound is 340 m/s or 29 microseconds per centimeter.
@@ -421,16 +498,5 @@ long microsecondsToCentimeters(long microseconds)
   return microseconds / 29 / 2;
 }
 
-
-// *************** laughTest() ******************
-// Opens & closes 4 times in a laughing motion. (use to set moutOpened/mouthClosed values)
-void laughTest(int n){
-  for ( int x=1 ; x < (n+1) ; x++){
-  myServo.write(mouthOpened);
-  delay(moveDelay);
-  myServo.write(mouthClosed);
-  delay(moveDelay);
-  }
-}
 
 
