@@ -10,6 +10,12 @@
   Instructions:
   Ping sensor uses pins 4(trigger) & 5(echo)
 
+  // PING                  
+  // US-100  \--5v-trg-echo-GND-GND--/    
+  //             |   |   |   |   |        
+  // Arduino    Vcc  4   5  GND           
+
+
   This has the ping sensor code which is a little complex. So once 
   you get it working, save it, and then add your skull servo lauging 
   code to this, also get it working and give IT a new meaningful name
