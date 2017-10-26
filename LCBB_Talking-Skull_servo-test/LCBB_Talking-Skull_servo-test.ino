@@ -26,15 +26,9 @@ const int servoPin=6;   // Connecting the servo to this digital I/O pin
 
 //**** Settings for 6" Skull, Right jaw-joint servo-axis pivot mount
 //****    -expect max of around 40-60 degrees of travel for this jaw setup 
-int mouthClosed=125 ;   // These values will have to be discovered for your servo configuration.
+int mouthClosed=115 ;   // These values will have to be discovered for your servo configuration.
 int mouthOpened=80 ;    // These values will have to be discovered for your servo configuration.
 int mouthDelay=200;      // Amount of time to allow one open or closed move (1/2 cycle)
-
-//// Change these values experimentially from 0-180 (or your max servo range)
-//// TIP: If the servo-arm (horn) is in the wrong position, you can pull it off
-////      and reposition it where you want it to start or end.
-int mouthOpened=0 ;    // These values will have to be discovered for your servo configuration.
-int mouthClosed=80 ;   // These values will have to be discovered for your servo configuration.
 
 
 void setup() {
@@ -46,12 +40,12 @@ void setup() {
 // *************** MAIN LOOP *******************
 void loop() {
   myServo.write(mouthOpened);
-  delay(1000);
+  delay(200);
 
   myServo.write(mouthClosed);
-  delay(1000);
+  delay(200);
   
-  delay(5000);    // recommend this when first testing so you know which value is open vs closed
+  delay(1000);    // recommend this when first testing so you know which value is open vs closed
 }
 
 
