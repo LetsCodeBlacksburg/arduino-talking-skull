@@ -44,18 +44,19 @@ motion activated mp3 player of all available sound files.
   //
   // There are two ways to animate the mouth.. the easy way and the hard way.
   //
-  // EASY MOUTH: (recommend doing this first)
-  // Just use the laughTest(n) function in conjunction with the duration of the sound.
+  // EASY MOUTH: laughCount(n) (recommend doing this first)
+  // Just use the laughCount(n) function in conjunction with the number of laughs, or do a laughCount(1) while
+  // the !digitalRead(dfBusy) == true (which means the DFPlayer is playing).
   //
-  // HARD MOUTH: (do this last as a stretch goal)
-  // Lip-syncing to the actual sound output using a sliding-window "audio envelope" for mouth motion 
-  // is not trivial. To start off, you sample the DFPlayer's audio out (DACR) on arduino's A0, until
-  // _BUSY returns high (no mp3 playing). While playing (_BUSY=LOW), the soundSilence value is used 
-  // to compensate for any DC drift out from the DFPlayer and subtract the rolling soundMax from the 
-  // silenceValue to get the soundAmplitude value. This value should be in a time boxed sliding 
-  // window to give you an approximate "VU" style volume level. Then you just use map() to 
-  // mapping the silenceValue, soundAmplitude --> mouthClosed to mouthOpened values and send 
-  // that value to the mouth servo (while _BUSY stays low)
+  // HARD MOUTH: laughWsound() (do this only if you have finished everything else)
+  // A strategy for lip-syncing the sound output can be done by using a sliding-window "audio envelope", but 
+  // is not trivial. To start off, you sample the DFPlayer's audio out (DACR) on arduino's A0 as many times as
+  // yo ucan within 20ms, average the top three MAX values to get a soundMax value, and as long as 
+  // dfBusy = LOW, the soundSilence value is used to compensate for any DC drift out from the DFPlayer to 
+  // subtract the rolling soundMax from the silenceValue to get the rolling, 20ms soundAmplitude value. 
+  // This value should be in a time boxed sliding window to give you an approximate "VU" style volume level. 
+  // Then you just use map() to mapping the silenceValue, soundAmplitude --> mouthClosed to mouthOpened values 
+  // and send that value to the mouth servo (while _BUSY stays low)
   // <whew>
 
 

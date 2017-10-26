@@ -33,7 +33,7 @@ const int servoPin=6;   // Connecting the servo to this digital I/O pin
 
 //**** 6" Skull, Right jaw-joint servo-axis pivot mount
 //****    -between 30 - 60 degrees of travel 
-int mouthClosed=110 ;   // These values will have to be discovered for your servo configuration.
+int mouthClosed=115 ;   // These values will have to be discovered for your servo configuration.
 int mouthOpened=80 ;    // These values will have to be discovered for your servo configuration.
 int moveDelay=200;      // Amount of time to allow one open or closed move (1/2 cycle)
 
@@ -62,7 +62,7 @@ void loop() {
   myServo.write(mouthClosed);     // one closed test
   delay(moveDelay);
 
-  laughCount(4);               // Cycles the jaw in a laughing motion
+  //laughCount(4);               // Cycles the jaw in a laughing motion
    
 }
 
