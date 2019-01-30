@@ -1,4 +1,5 @@
 # arduino-talking-skull
+<IMG SRC=http://theweeks.org/tmp/PICS/LCBB/talking-skull.jpg align=right width=200>
 This project is designed as a make-and-take Halloween workshop that requires:
 * 1 - Mini USB cable (blue)
 * 1 - Funduino Arduino board (red, with extra pin headers)
