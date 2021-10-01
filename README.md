@@ -25,6 +25,6 @@ Reference the PDF build doc on how to connect everything. The steps (other than 
 numbered 2, 3, 4, 5.  After blink, load the LCBB_Talking-Skull_2_servo-test code to first test your servo/skull 
 values before continuing on with the other steps or hardware build.
 
-All LCBB code and related materials are copy left (open sourced) under the Creative Commons (CC)(BY)(SA)[1] License.
+All LCBB code and related materials are copy left (open sourced) under the Creative Commons (CC)(BY)(NC)(SA)[1] License.
 
 [1] - https://en.wikipedia.org/wiki/Creative_Commons_license#Types_of_licenses
